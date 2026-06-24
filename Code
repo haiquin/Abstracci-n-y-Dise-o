@@ -1,0 +1,889 @@
+# =============================================================================
+# APLICACIÓN: Gestión de Empleados
+# AUTORA: Hailyen Jullieth Grajales Quiñonez
+# MATERIA: Estructura de Datos - UNAD
+# PARADIGMA: Programación Orientada a Objetos (POO)
+# LIBRERÍA GUI: Tkinter
+# =============================================================================
+
+# ── Importaciones ─────────────────────────────────────────────────────────────
+import tkinter as tk
+from tkinter import ttk, messagebox
+from datetime import datetime
+
+
+# =============================================================================
+# CLASE DE LÓGICA: GestionEmpleados
+# Representa la entidad de negocio "Empleado" y su lógica de cálculo.
+# =============================================================================
+class GestionEmpleados:
+    """
+    Clase pública que modela la información y la lógica de pago de un empleado.
+
+    Atributos
+    ---------
+    identificacion   : str      – Número de documento del empleado.
+    nombre_completo  : str      – Nombre y apellidos completos.
+    genero           : str      – 'Masculino' o 'Femenino'.
+    cargo_laboral    : str      – Cargo seleccionado en la empresa.
+    salario_dia      : float    – Valor del salario por día según cargo.
+    dias_laborados   : int      – Cantidad de días trabajados en el período.
+    fecha_registro   : datetime – Fecha/hora en que se registró el empleado.
+    """
+
+    def __init__(
+        self,
+        identificacion: str,
+        nombre_completo: str,
+        genero: str,
+        cargo_laboral: str,
+        salario_dia: float,
+        dias_laborados: int,
+        fecha_registro: datetime,
+    ):
+        self.identificacion = identificacion
+        self.nombre_completo = nombre_completo
+        self.genero = genero
+        self.cargo_laboral = cargo_laboral
+        self.salario_dia = salario_dia
+        self.dias_laborados = dias_laborados
+        self.fecha_registro = fecha_registro
+
+    def calcular_total_pago(self, cargo_laboral: str = None, salario_dia: float = None) -> float:
+        """
+        Calcula el total a pagar al empleado.
+
+        Según el Anexo 2 de la guía UNAD, el método recibe como parámetros
+        el cargo y el costo por día trabajado. Si no se especifican,
+        el método usa los valores ya almacenados en la instancia
+        (cargo_laboral y salario_dia), lo cual permite tanto la firma
+        exigida por la guía como un uso simplificado sin repetir datos.
+
+        Parameters
+        ----------
+        cargo_laboral : str, opcional – Cargo del empleado (informativo).
+        salario_dia    : float, opcional – Valor del salario por día.
+                          Si se proporciona, sobrescribe el ya almacenado.
+
+        Fórmula: total = salario_dia × dias_laborados
+
+        Returns
+        -------
+        float – Valor total de la nómina para el período.
+        """
+        # Si el llamado incluye el cargo, se valida coherencia con el registro
+        if cargo_laboral is not None:
+            self.cargo_laboral = cargo_laboral
+
+        # Si se especifica un salario por día distinto, se actualiza
+        if salario_dia is not None:
+            self.salario_dia = salario_dia
+
+        return self.salario_dia * self.dias_laborados
+
+
+# =============================================================================
+# PALETA DE COLORES Y ESTILOS  (constantes globales para mantener coherencia)
+# =============================================================================
+COLOR_FONDO        = "#1B2A3B"   # Azul petróleo oscuro  – fondo principal
+COLOR_PANEL        = "#243447"   # Azul petróleo medio   – paneles / frames
+COLOR_ACENTO       = "#00C9A7"   # Verde esmeralda       – detalles destacados
+COLOR_ACENTO2      = "#0078D4"   # Azul corporativo      – botones secundarios
+COLOR_TEXTO        = "#E8EDF2"   # Blanco cálido         – texto general
+COLOR_TEXTO_GRIS   = "#8CA0B3"   # Gris azulado          – etiquetas secundarias
+COLOR_ENTRADA      = "#2E4057"   # Azul medio oscuro     – fondo de Entry
+COLOR_BTN_PPAL     = "#00C9A7"   # Verde – botón principal
+COLOR_BTN_HOVER    = "#00A88A"   # Verde más oscuro para hover
+COLOR_BTN_SALIR    = "#C0392B"   # Rojo para botón Salir
+COLOR_BORDE        = "#3A5068"   # Borde sutil
+
+FUENTE_TITULO      = ("Segoe UI", 20, "bold")
+FUENTE_SUBTITULO   = ("Segoe UI", 11)
+FUENTE_LABEL       = ("Segoe UI", 10)
+FUENTE_LABEL_NEG   = ("Segoe UI", 10, "bold")
+FUENTE_ENTRADA     = ("Segoe UI", 10)
+FUENTE_BTN         = ("Segoe UI", 10, "bold")
+FUENTE_REPORTE     = ("Segoe UI", 11)
+FUENTE_TOTAL       = ("Segoe UI", 16, "bold")
+
+# Salarios fijos por cargo (en pesos colombianos)
+SALARIOS_CARGO = {
+    "Servicios Generales": 40_000.0,
+    "Administrativo":      50_000.0,
+    "Electricista":        60_000.0,
+    "Mecánico":            80_000.0,
+    "Soldador":            90_000.0,
+}
+
+CONTRASEÑA_CORRECTA = "4682"
+
+# Nombre de la empresa solicitante (Constructora Mejor), según contexto del caso
+NOMBRE_EMPRESA = "Constructora Mejor"
+
+
+# =============================================================================
+# VENTANA 1 – LOGIN
+# =============================================================================
+class VentanaLogin:
+    """
+    Ventana de inicio de sesión.
+    Valida la contraseña y, si es correcta, abre la ventana de Registro.
+    """
+
+    def __init__(self):
+        # ── Crear ventana raíz ────────────────────────────────────────────────
+        self.root = tk.Tk()
+        self.root.title("Gestión de Empleados – Acceso")
+        self.root.geometry("420x480")
+        self.root.resizable(False, False)
+        self.root.configure(bg=COLOR_FONDO)
+
+        # Centrar ventana en pantalla
+        self._centrar_ventana(self.root, 420, 480)
+
+        self._construir_ui()
+        self.root.mainloop()
+
+    # ── Helpers de estilo ──────────────────────────────────────────────────────
+    @staticmethod
+    def _centrar_ventana(ventana, ancho, alto):
+        """Calcula la posición para centrar cualquier ventana en la pantalla."""
+        ventana.update_idletasks()
+        x = (ventana.winfo_screenwidth() // 2) - (ancho // 2)
+        y = (ventana.winfo_screenheight() // 2) - (alto // 2)
+        ventana.geometry(f"{ancho}x{alto}+{x}+{y}")
+
+    def _construir_ui(self):
+        """Construye y posiciona todos los widgets del login."""
+
+        # ── Franja superior de color acento ──────────────────────────────────
+        franja = tk.Frame(self.root, bg=COLOR_ACENTO, height=6)
+        franja.pack(fill="x")
+
+        # ── Contenedor central ───────────────────────────────────────────────
+        contenedor = tk.Frame(self.root, bg=COLOR_FONDO)
+        contenedor.pack(expand=True, fill="both", padx=40)
+
+        # Ícono / logotipo simbólico
+        tk.Label(
+            contenedor,
+            text="👤",
+            font=("Segoe UI", 48),
+            bg=COLOR_FONDO,
+            fg=COLOR_ACENTO,
+        ).pack(pady=(35, 5))
+
+        # Nombre de la aplicación
+        tk.Label(
+            contenedor,
+            text="Gestión de Empleados",
+            font=FUENTE_TITULO,
+            bg=COLOR_FONDO,
+            fg=COLOR_TEXTO,
+        ).pack()
+
+        # Nombre de la autora
+        tk.Label(
+            contenedor,
+            text="Hailyen Jullieth Grajales Quiñonez",
+            font=FUENTE_SUBTITULO,
+            bg=COLOR_FONDO,
+            fg=COLOR_ACENTO,
+        ).pack(pady=(2, 0))
+
+        tk.Label(
+            contenedor,
+            text="UNAD – Estructura de Datos",
+            font=("Segoe UI", 9),
+            bg=COLOR_FONDO,
+            fg=COLOR_TEXTO_GRIS,
+        ).pack(pady=(0, 4))
+
+        # Nombre de la empresa para la que se desarrolla el sistema
+        tk.Label(
+            contenedor,
+            text=f"Sistema desarrollado para: {NOMBRE_EMPRESA}",
+            font=("Segoe UI", 9, "italic"),
+            bg=COLOR_FONDO,
+            fg=COLOR_TEXTO_GRIS,
+        ).pack(pady=(0, 30))
+
+        # ── Separador ────────────────────────────────────────────────────────
+        tk.Frame(contenedor, bg=COLOR_BORDE, height=1).pack(fill="x", pady=(0, 20))
+
+        # ── Label contraseña ─────────────────────────────────────────────────
+        tk.Label(
+            contenedor,
+            text="Contraseña de acceso",
+            font=FUENTE_LABEL_NEG,
+            bg=COLOR_FONDO,
+            fg=COLOR_TEXTO_GRIS,
+            anchor="w",
+        ).pack(fill="x")
+
+        # ── Campo de contraseña (enmascarado) ────────────────────────────────
+        self.entrada_password = tk.Entry(
+            contenedor,
+            show="●",                    # máscara con puntos
+            font=("Segoe UI", 13),
+            bg=COLOR_ENTRADA,
+            fg=COLOR_TEXTO,
+            insertbackground=COLOR_ACENTO,
+            relief="flat",
+            bd=0,
+        )
+        self.entrada_password.pack(fill="x", ipady=8, pady=(4, 4))
+
+        # Línea decorativa debajo del entry
+        tk.Frame(contenedor, bg=COLOR_ACENTO, height=2).pack(fill="x")
+
+        # Permite presionar Enter como alternativa al botón
+        self.entrada_password.bind("<Return>", lambda e: self._verificar_password())
+
+        # ── Botón Ingresar ───────────────────────────────────────────────────
+        btn = tk.Button(
+            contenedor,
+            text="  INGRESAR  →",
+            font=FUENTE_BTN,
+            bg=COLOR_BTN_PPAL,
+            fg="#0D1F2D",
+            activebackground=COLOR_BTN_HOVER,
+            activeforeground="#0D1F2D",
+            relief="flat",
+            cursor="hand2",
+            command=self._verificar_password,
+        )
+        btn.pack(fill="x", ipady=10, pady=(22, 0))
+
+        # ── Poner foco en el campo de contraseña ─────────────────────────────
+        self.entrada_password.focus_set()
+
+    def _verificar_password(self):
+        """
+        Lee la contraseña ingresada y la compara con la contraseña genérica.
+        - Correcta → cierra esta ventana y abre VentanaRegistro.
+        - Incorrecta → muestra un messagebox de error y limpia el campo.
+        """
+        password_ingresada = self.entrada_password.get()
+
+        if password_ingresada == CONTRASEÑA_CORRECTA:
+            # ── Éxito: cierra login y abre registro ──────────────────────────
+            self.root.destroy()
+            VentanaRegistro()
+        else:
+            # ── Error: avisa al usuario y limpia el campo ─────────────────────
+            messagebox.showerror(
+                "Acceso denegado",
+                "Contraseña incorrecta.\nPor favor inténtelo de nuevo.",
+            )
+            self.entrada_password.delete(0, tk.END)
+            self.entrada_password.focus_set()
+
+
+# =============================================================================
+# VENTANA 2 – REGISTRO DE DATOS DEL EMPLEADO
+# =============================================================================
+class VentanaRegistro:
+    """
+    Formulario principal para ingresar los datos del empleado.
+    Instancia la clase GestionEmpleados al guardar y abre el reporte.
+    """
+
+    def __init__(self):
+        self.root = tk.Tk()
+        self.root.title("Gestión de Empleados – Registro")
+        # Alto aumentado de 670 a 760: con 670px el botón
+        # "Calcular Nómina / Mostrar Reporte" y "Salir" quedaban
+        # parcialmente cortados en la parte inferior de la ventana.
+        self.root.geometry("560x760")
+        self.root.resizable(False, False)
+        self.root.configure(bg=COLOR_FONDO)
+
+        # Objeto empleado – se instancia al presionar "Guardar Registro"
+        self.empleado: GestionEmpleados | None = None
+
+        # Contador automático de filas del grid: cada widget que se agregue
+        # al formulario consume su propio bloque de filas y avanza este
+        # contador, evitando que dos controles terminen en la misma fila
+        # (causa raíz de la superposición de Entry/Label detectada).
+        self._fila_actual = 0
+
+        # Interceptar el botón "X" de la ventana para pedir confirmación,
+        # igual que el botón "Salir" (evita cierres accidentales).
+        self.root.protocol("WM_DELETE_WINDOW", self._confirmar_salida)
+
+        # ── Validadores de entrada en tiempo real ───────────────────────────
+        # Tkinter exige registrar cada función de validación contra la
+        # ventana antes de poder asignarla a un Entry mediante
+        # validatecommand. Esto bloquea el carácter en el momento en que
+        # se escribe (no solo al guardar), corrigiendo los problemas 1, 2 y 3.
+        self._validador_numerico = self.root.register(self._validar_solo_numeros)
+        self._validador_nombre   = self.root.register(self._validar_solo_letras)
+
+        VentanaLogin._centrar_ventana(self.root, 560, 760)
+        self._construir_ui()
+        self.root.mainloop()
+
+    # ── Funciones de validación de caracteres ───────────────────────────────────
+    @staticmethod
+    def _validar_solo_numeros(texto_propuesto: str) -> bool:
+        """
+        Valida en tiempo real que el contenido propuesto para un Entry
+        sea únicamente numérico. Se usa en Identificación y Días Laborados
+        (Problemas 1 y 2). Permite el campo vacío para poder borrar todo
+        el contenido sin quedar bloqueado.
+        """
+        if texto_propuesto == "":
+            return True
+        return texto_propuesto.isdigit()
+
+    @staticmethod
+    def _validar_solo_letras(texto_propuesto: str) -> bool:
+        """
+        Valida en tiempo real que el contenido propuesto para el Entry de
+        Nombre Completo contenga únicamente letras (incluye tildes, Ñ/ñ
+        y diéresis propias del español), espacios, y apóstrofo (para
+        nombres compuestos como O'Higgins). Corrige el Problema 3.
+        """
+        if texto_propuesto == "":
+            return True
+        caracteres_permitidos = (
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            "áéíóúÁÉÍÓÚñÑüÜ "
+        )
+        return all(caracter in caracteres_permitidos for caracter in texto_propuesto)
+
+    # ── Constructor de la interfaz ─────────────────────────────────────────────
+    def _construir_ui(self):
+        """Construye todos los widgets del formulario de registro."""
+
+        # ── Franja superior ───────────────────────────────────────────────────
+        tk.Frame(self.root, bg=COLOR_ACENTO, height=6).pack(fill="x")
+
+        # ── Encabezado ────────────────────────────────────────────────────────
+        encabezado = tk.Frame(self.root, bg=COLOR_PANEL, pady=14)
+        encabezado.pack(fill="x", padx=0)
+
+        tk.Label(
+            encabezado,
+            text="📋  Registro de Empleado",
+            font=FUENTE_TITULO,
+            bg=COLOR_PANEL,
+            fg=COLOR_TEXTO,
+        ).pack()
+
+        tk.Label(
+            encabezado,
+            text="Complete todos los campos y guarde el registro",
+            font=FUENTE_SUBTITULO,
+            bg=COLOR_PANEL,
+            fg=COLOR_TEXTO_GRIS,
+        ).pack()
+
+        # ── Área de formulario con scroll ─────────────────────────────────────
+        # Usamos un Frame con padding para agrupar los campos
+        form = tk.Frame(self.root, bg=COLOR_FONDO, padx=30, pady=15)
+        form.pack(fill="both", expand=True)
+
+        # ── Campo: Identificación ────────────────────────────────────────────
+        # _crear_campo() avanza el contador self._fila_actual automáticamente,
+        # por lo que ningún widget puede terminar compartiendo fila con otro.
+        # Se le pasa el validador numérico para que solo acepte dígitos
+        # mientras se escribe (corrige el Problema 1).
+        self.entrada_id = self._crear_campo(
+            form, "Número de Identificación", validador=self._validador_numerico
+        )
+
+        # ── Campo: Nombre Completo ───────────────────────────────────────────
+        # Se le pasa el validador alfabético para que solo acepte letras,
+        # espacios y tildes mientras se escribe (corrige el Problema 3).
+        self.entrada_nombre = self._crear_campo(
+            form, "Nombre Completo", validador=self._validador_nombre
+        )
+
+        # ── Campo: Género (Radio Buttons) ─────────────────────────────────────
+        self._label_campo(form, "Género")
+
+        self.var_genero = tk.StringVar(value="Masculino")
+
+        frame_radio = tk.Frame(form, bg=COLOR_FONDO)
+        frame_radio.grid(row=self._fila_actual, column=0, columnspan=2, sticky="w", pady=(0, 10))
+        self._fila_actual += 1
+
+        for opcion in ("Masculino", "Femenino"):
+            tk.Radiobutton(
+                frame_radio,
+                text=opcion,
+                variable=self.var_genero,
+                value=opcion,
+                font=FUENTE_LABEL,
+                bg=COLOR_FONDO,
+                fg=COLOR_TEXTO,
+                selectcolor=COLOR_ENTRADA,
+                activebackground=COLOR_FONDO,
+                activeforeground=COLOR_ACENTO,
+                cursor="hand2",
+            ).pack(side="left", padx=(0, 20))
+
+        # ── Campo: Cargo Laboral (Combobox) ───────────────────────────────────
+        self._label_campo(form, "Cargo Laboral")
+
+        # Estilo del Combobox via ttk.Style
+        estilo = ttk.Style()
+        estilo.theme_use("clam")
+        estilo.configure(
+            "Custom.TCombobox",
+            fieldbackground=COLOR_ENTRADA,
+            background=COLOR_ENTRADA,
+            foreground=COLOR_TEXTO,
+            selectbackground=COLOR_ACENTO,
+            selectforeground="#0D1F2D",
+            arrowcolor=COLOR_ACENTO,
+            bordercolor=COLOR_BORDE,
+            lightcolor=COLOR_BORDE,
+            darkcolor=COLOR_BORDE,
+        )
+
+        self.var_cargo = tk.StringVar()
+        self.combo_cargo = ttk.Combobox(
+            form,
+            textvariable=self.var_cargo,
+            values=list(SALARIOS_CARGO.keys()),
+            state="readonly",
+            font=FUENTE_ENTRADA,
+            style="Custom.TCombobox",
+        )
+        self.combo_cargo.grid(row=self._fila_actual, column=0, columnspan=2, sticky="ew", pady=(0, 10), ipady=5)
+        self._fila_actual += 1
+        # Cuando cambia el cargo, actualiza automáticamente el salario
+        self.combo_cargo.bind("<<ComboboxSelected>>", self._actualizar_salario)
+
+        # ── Campo: Salario Día (deshabilitado, solo lectura) ─────────────────
+        self._label_campo(form, "Salario por Día (COP $)")
+
+        self.var_salario = tk.StringVar(value="Seleccione un cargo primero")
+        self.entrada_salario = tk.Entry(
+            form,
+            textvariable=self.var_salario,
+            font=FUENTE_ENTRADA,
+            bg=COLOR_PANEL,          # fondo diferente para indicar que es de solo lectura
+            fg=COLOR_ACENTO,
+            disabledforeground=COLOR_ACENTO,
+            disabledbackground=COLOR_PANEL,
+            relief="flat",
+            state="disabled",        # ← completamente deshabilitado
+        )
+        self.entrada_salario.grid(row=self._fila_actual, column=0, columnspan=2, sticky="ew", ipady=7, pady=(0, 10))
+        self._fila_actual += 1
+        tk.Frame(form, bg=COLOR_BORDE, height=1).grid(
+            row=self._fila_actual, column=0, columnspan=2, sticky="ew", pady=(0, 10)
+        )
+        self._fila_actual += 1
+
+        # ── Campo: Días Laborados ─────────────────────────────────────────────
+        # Se le pasa el validador numérico para que solo acepte dígitos
+        # mientras se escribe (corrige el Problema 2).
+        self.entrada_dias = self._crear_campo(
+            form, "Días Laborados", validador=self._validador_numerico
+        )
+
+        # Configurar columnas del grid para que los entry se expandan
+        form.columnconfigure(0, weight=1)
+        form.columnconfigure(1, weight=1)
+
+        # ── Barra de botones ──────────────────────────────────────────────────
+        barra = tk.Frame(self.root, bg=COLOR_PANEL, pady=14, padx=30)
+        barra.pack(fill="x", side="bottom")
+
+        # Botón Guardar Registro
+        self._btn(
+            barra,
+            texto="💾  Guardar Registro",
+            comando=self._guardar_registro,
+            color=COLOR_BTN_PPAL,
+            fg_color="#0D1F2D",
+        ).pack(fill="x", ipady=8, pady=(0, 6))
+
+        # Botón Calcular Nómina / Mostrar Reporte
+        self._btn(
+            barra,
+            texto="📊  Calcular Nómina / Mostrar Reporte",
+            comando=self._mostrar_reporte,
+            color=COLOR_ACENTO2,
+            fg_color=COLOR_TEXTO,
+        ).pack(fill="x", ipady=8, pady=(0, 6))
+
+        # Botón Salir
+        self._btn(
+            barra,
+            texto="✖  Salir",
+            comando=self._confirmar_salida,
+            color=COLOR_BTN_SALIR,
+            fg_color=COLOR_TEXTO,
+        ).pack(fill="x", ipady=8)
+
+    # ── Métodos de ayuda para construir widgets ────────────────────────────────
+    def _label_campo(self, parent, texto):
+        """
+        Crea una etiqueta de campo en la siguiente fila disponible del grid
+        y avanza automáticamente el contador self._fila_actual.
+        """
+        tk.Label(
+            parent,
+            text=texto,
+            font=FUENTE_LABEL_NEG,
+            bg=COLOR_FONDO,
+            fg=COLOR_TEXTO_GRIS,
+            anchor="w",
+        ).grid(row=self._fila_actual, column=0, columnspan=2, sticky="w", pady=(6, 0))
+        self._fila_actual += 1
+
+    def _crear_campo(self, parent, etiqueta, validador=None):
+        """
+        Crea una etiqueta + Entry (en filas consecutivas calculadas
+        automáticamente con self._fila_actual) y retorna el Entry para
+        su uso posterior. Esta versión elimina el riesgo de superposición
+        de widgets que existía cuando las filas se calculaban a mano
+        (row, row+1, row+2) y no coincidían con el avance real del
+        formulario, causando que campos como "Nombre Completo" quedaran
+        dibujados encima de "Identificación" y no respondieran al clic.
+
+        Parameters
+        ----------
+        validador : tupla opcional (nombre_tcl, ) devuelta por root.register().
+                    Si se pasa, el Entry queda restringido en tiempo real a
+                    aceptar solo los caracteres que la función de validación
+                    permita (ver _validar_solo_numeros / _validar_solo_letras).
+        """
+        self._label_campo(parent, etiqueta)
+
+        entry = tk.Entry(
+            parent,
+            font=FUENTE_ENTRADA,
+            bg=COLOR_ENTRADA,
+            fg=COLOR_TEXTO,
+            insertbackground=COLOR_ACENTO,
+            relief="flat",
+        )
+
+        # Si se proporcionó un validador, se vincula al Entry.
+        # validate="key" dispara la validación en cada pulsación de tecla.
+        # %P es el código de sustitución de Tcl/Tk que representa el texto
+        # COMPLETO que tendría el campo si la tecla se llegara a aceptar.
+        if validador is not None:
+            entry.config(validate="key", validatecommand=(validador, "%P"))
+
+        entry.grid(row=self._fila_actual, column=0, columnspan=2, sticky="ew", ipady=7, pady=(2, 0))
+        self._fila_actual += 1
+
+        # Línea decorativa
+        tk.Frame(parent, bg=COLOR_BORDE, height=1).grid(
+            row=self._fila_actual, column=0, columnspan=2, sticky="ew", pady=(0, 6)
+        )
+        self._fila_actual += 1
+
+        return entry
+
+    @staticmethod
+    def _btn(parent, texto, comando, color, fg_color):
+        """Crea y devuelve un botón con estilo uniforme."""
+        return tk.Button(
+            parent,
+            text=texto,
+            font=FUENTE_BTN,
+            bg=color,
+            fg=fg_color,
+            activebackground=COLOR_BTN_HOVER,
+            activeforeground=fg_color,
+            relief="flat",
+            cursor="hand2",
+            command=comando,
+        )
+
+    # ── Lógica de eventos ──────────────────────────────────────────────────────
+    def _actualizar_salario(self, event=None):
+        """
+        Se dispara al cambiar el Combobox de cargo.
+        Habilita temporalmente el Entry de salario para escribir el valor,
+        luego lo vuelve a deshabilitar.
+        """
+        cargo = self.var_cargo.get()
+        salario = SALARIOS_CARGO.get(cargo, 0.0)
+
+        # Habilitar brevemente para actualizar el valor
+        self.entrada_salario.config(state="normal")
+        self.var_salario.set(f"$ {salario:,.0f}")
+        self.entrada_salario.config(state="disabled")
+
+    def _guardar_registro(self):
+        """
+        Valida los campos y, si todo es correcto, instancia GestionEmpleados
+        guardando la fecha/hora actual en fecha_registro.
+        """
+        # ── Validaciones básicas ──────────────────────────────────────────────
+        identificacion  = self.entrada_id.get().strip()
+        nombre_completo = self.entrada_nombre.get().strip()
+        genero          = self.var_genero.get()
+        cargo_laboral   = self.var_cargo.get()
+        dias_txt        = self.entrada_dias.get().strip()
+
+        if not identificacion:
+            messagebox.showwarning("Campo requerido", "Ingrese la identificación del empleado.")
+            self.entrada_id.focus_set()
+            return
+
+        # Validación: la identificación debe ser solo numérica (cédula/documento)
+        if not identificacion.isdigit():
+            messagebox.showerror(
+                "Valor inválido",
+                "La identificación debe contener únicamente números.",
+            )
+            self.entrada_id.focus_set()
+            return
+
+        if not nombre_completo:
+            messagebox.showwarning("Campo requerido", "Ingrese el nombre completo del empleado.")
+            self.entrada_nombre.focus_set()
+            return
+
+        if not cargo_laboral:
+            messagebox.showwarning("Campo requerido", "Seleccione el cargo laboral.")
+            self.combo_cargo.focus_set()
+            return
+
+        if not dias_txt:
+            messagebox.showwarning("Campo requerido", "Ingrese los días laborados.")
+            self.entrada_dias.focus_set()
+            return
+
+        try:
+            dias_laborados = int(dias_txt)
+            if dias_laborados <= 0:
+                raise ValueError
+            # Validación de rango: un mes tiene máximo 31 días;
+            # se permite hasta 31 para cubrir un período mensual completo.
+            if dias_laborados > 31:
+                messagebox.showerror(
+                    "Valor inválido",
+                    "Los días laborados no pueden ser mayores a 31 (un mes).",
+                )
+                self.entrada_dias.focus_set()
+                return
+        except ValueError:
+            messagebox.showerror("Valor inválido", "Los días laborados deben ser un número entero positivo.")
+            self.entrada_dias.focus_set()
+            return
+
+        salario_dia = SALARIOS_CARGO[cargo_laboral]
+
+        # ── Instanciar la clase de lógica con la fecha/hora actual ─────────────
+        self.empleado = GestionEmpleados(
+            identificacion  = identificacion,
+            nombre_completo = nombre_completo,
+            genero          = genero,
+            cargo_laboral   = cargo_laboral,
+            salario_dia     = salario_dia,
+            dias_laborados  = dias_laborados,
+            fecha_registro  = datetime.now(),   # ← captura automática
+        )
+
+        messagebox.showinfo(
+            "Registro exitoso",
+            f"Los datos de {nombre_completo} han sido guardados correctamente.\n\n"
+            f"Fecha de registro: {self.empleado.fecha_registro.strftime('%d/%m/%Y %H:%M:%S')}",
+        )
+
+    def _mostrar_reporte(self):
+        """
+        Abre la VentanaReporte si hay un empleado registrado;
+        de lo contrario, avisa al usuario.
+        """
+        if self.empleado is None:
+            messagebox.showwarning(
+                "Sin datos",
+                "Primero debe guardar el registro del empleado\nantes de generar el reporte.",
+            )
+            return
+
+        # Abrir el reporte como ventana hija (Toplevel)
+        VentanaReporte(parent=self.root, empleado=self.empleado)
+
+    def _confirmar_salida(self):
+        """Muestra un cuadro de diálogo de confirmación antes de cerrar."""
+        respuesta = messagebox.askyesno(
+            "Confirmar cierre",
+            "¿Está seguro de que desea cerrar la aplicación?\n"
+            "Los datos no guardados se perderán.",
+        )
+        if respuesta:
+            self.root.destroy()
+
+
+# =============================================================================
+# VENTANA 3 – REPORTE / NÓMINA
+# =============================================================================
+class VentanaReporte:
+    """
+    Ventana Toplevel que muestra el reporte completo del empleado registrado
+    y calcula el total a pagar usando el método de la clase GestionEmpleados.
+    """
+
+    def __init__(self, parent: tk.Tk, empleado: GestionEmpleados):
+        self.empleado = empleado
+        self.parent = parent
+
+        # ── Crear ventana hija ─────────────────────────────────────────────────
+        self.ventana = tk.Toplevel(parent)
+        self.ventana.title("Reporte de Nómina")
+        self.ventana.geometry("500x600")
+        self.ventana.resizable(False, False)
+        self.ventana.configure(bg=COLOR_FONDO)
+        self.ventana.grab_set()   # Bloquea interacción con la ventana padre mientras está abierta
+
+        # IMPORTANTE: si el reporte se cierra con la "X" del sistema operativo
+        # (en vez del botón "Regresar"), nos asegura liberar el grab_set y
+        # devolver el foco al formulario de Registro. Sin esto, los campos
+        # de Nombre/Género/Días podrían quedar bloqueados.
+        self.ventana.protocol("WM_DELETE_WINDOW", self._cerrar)
+
+        VentanaLogin._centrar_ventana(self.ventana, 500, 600)
+        self._construir_ui()
+
+    def _cerrar(self):
+        """
+        Libera el grab_set, destruye la ventana de reporte y devuelve
+        el foco a la ventana de Registro (padre), evitando que sus
+        campos queden bloqueados o sin respuesta.
+        """
+        self.ventana.grab_release()
+        self.ventana.destroy()
+        self.parent.focus_force()
+
+    def _construir_ui(self):
+        """Construye el reporte visual con todos los datos del empleado."""
+
+        # ── Franja superior ───────────────────────────────────────────────────
+        tk.Frame(self.ventana, bg=COLOR_ACENTO, height=6).pack(fill="x")
+
+        # ── Encabezado ─────────────────────────────────────────────────────────
+        enc = tk.Frame(self.ventana, bg=COLOR_PANEL, pady=16)
+        enc.pack(fill="x")
+
+        tk.Label(enc, text="📄  Reporte de Nómina", font=FUENTE_TITULO, bg=COLOR_PANEL, fg=COLOR_TEXTO).pack()
+        tk.Label(
+            enc,
+            text=NOMBRE_EMPRESA,
+            font=("Segoe UI", 10, "bold"),
+            bg=COLOR_PANEL,
+            fg=COLOR_ACENTO,
+        ).pack()
+        tk.Label(
+            enc,
+            text=f"Generado el {datetime.now().strftime('%d/%m/%Y  %H:%M:%S')}",
+            font=("Segoe UI", 9),
+            bg=COLOR_PANEL,
+            fg=COLOR_TEXTO_GRIS,
+        ).pack()
+
+        # ── Panel de datos ─────────────────────────────────────────────────────
+        panel = tk.Frame(self.ventana, bg=COLOR_PANEL, padx=28, pady=20)
+        panel.pack(fill="both", expand=True, padx=20, pady=12)
+
+        # Calcular el total usando el método de la clase de lógica
+        # Llamado explícito con cargo y costo por día como parámetros,
+        # tal como lo exige el Anexo 2 de la guía UNAD.
+        total_pagar = self.empleado.calcular_total_pago(
+            cargo_laboral=self.empleado.cargo_laboral,
+            salario_dia=self.empleado.salario_dia,
+        )
+
+        # Lista de (etiqueta, valor) para mostrar ordenadamente
+        campos = [
+            ("Identificación",     self.empleado.identificacion),
+            ("Nombre Completo",    self.empleado.nombre_completo),
+            ("Género",             self.empleado.genero),
+            ("Cargo Laboral",      self.empleado.cargo_laboral),
+            ("Días Laborados",     str(self.empleado.dias_laborados)),
+            ("Valor por Día",      f"$ {self.empleado.salario_dia:,.0f}"),
+            ("Fecha de Registro",  self.empleado.fecha_registro.strftime("%d/%m/%Y  %H:%M:%S")),
+        ]
+
+        for i, (etiqueta, valor) in enumerate(campos):
+            # Fila con color alternado para legibilidad
+            color_fila = COLOR_ENTRADA if i % 2 == 0 else COLOR_PANEL
+            fila = tk.Frame(panel, bg=color_fila, pady=5, padx=10)
+            fila.pack(fill="x", pady=1)
+
+            tk.Label(
+                fila,
+                text=etiqueta,
+                font=FUENTE_LABEL_NEG,
+                bg=color_fila,
+                fg=COLOR_TEXTO_GRIS,
+                width=18,
+                anchor="w",
+            ).pack(side="left")
+
+            tk.Label(
+                fila,
+                text=valor,
+                font=FUENTE_REPORTE,
+                bg=color_fila,
+                fg=COLOR_TEXTO,
+                anchor="w",
+            ).pack(side="left", padx=(10, 0))
+
+        # ── Separador antes del total ──────────────────────────────────────────
+        tk.Frame(panel, bg=COLOR_ACENTO, height=2).pack(fill="x", pady=(14, 10))
+
+        # ── Total a Pagar (destacado) ─────────────────────────────────────────
+        fila_total = tk.Frame(panel, bg=COLOR_PANEL, pady=8, padx=10)
+        fila_total.pack(fill="x")
+
+        tk.Label(
+            fila_total,
+            text="TOTAL A PAGAR",
+            font=FUENTE_TOTAL,
+            bg=COLOR_PANEL,
+            fg=COLOR_ACENTO,
+        ).pack(side="left")
+
+        tk.Label(
+            fila_total,
+            text=f"$ {total_pagar:,.0f}",
+            font=FUENTE_TOTAL,
+            bg=COLOR_PANEL,
+            fg=COLOR_TEXTO,
+        ).pack(side="right")
+
+        # ── Nota de cálculo ────────────────────────────────────────────────────
+        tk.Label(
+            panel,
+            text=f"Cálculo: ${self.empleado.salario_dia:,.0f}/día  ×  {self.empleado.dias_laborados} días",
+            font=("Segoe UI", 9, "italic"),
+            bg=COLOR_PANEL,
+            fg=COLOR_TEXTO_GRIS,
+        ).pack(pady=(4, 0))
+
+        # ── Botón Regresar ─────────────────────────────────────────────────────
+        tk.Button(
+            self.ventana,
+            text="← Regresar",
+            font=FUENTE_BTN,
+            bg=COLOR_ACENTO2,
+            fg=COLOR_TEXTO,
+            activebackground="#0062AD",
+            relief="flat",
+            cursor="hand2",
+            command=self._cerrar,
+        ).pack(fill="x", padx=20, pady=(0, 20), ipady=9)
+
+
+# =============================================================================
+# PUNTO DE ENTRADA
+# =============================================================================
+if __name__ == "__main__":
+    # La aplicación comienza siempre con la ventana de Login.
+    # VentanaLogin gestiona el flujo: al autenticarse correctamente
+    # destruye su propia ventana y crea VentanaRegistro.
+    VentanaLogin()
