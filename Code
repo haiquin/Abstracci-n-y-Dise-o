@@ -134,12 +134,15 @@ class VentanaLogin:
         # ── Crear ventana raíz ────────────────────────────────────────────────
         self.root = tk.Tk()
         self.root.title("Gestión de Empleados – Acceso")
-        self.root.geometry("420x480")
+        # Ventana compacta (480x620), unificada con VentanaRegistro para
+        # que ambas tengan exactamente las mismas dimensiones y una
+        # apariencia uniforme y moderna en toda la aplicación.
+        self.root.geometry("480x620")
         self.root.resizable(False, False)
         self.root.configure(bg=COLOR_FONDO)
 
         # Centrar ventana en pantalla
-        self._centrar_ventana(self.root, 420, 480)
+        self._centrar_ventana(self.root, 480, 620)
 
         self._construir_ui()
         self.root.mainloop()
@@ -162,7 +165,7 @@ class VentanaLogin:
 
         # ── Contenedor central ───────────────────────────────────────────────
         contenedor = tk.Frame(self.root, bg=COLOR_FONDO)
-        contenedor.pack(expand=True, fill="both", padx=40)
+        contenedor.pack(expand=True, fill="both", padx=45)
 
         # Ícono / logotipo simbólico
         tk.Label(
@@ -171,7 +174,7 @@ class VentanaLogin:
             font=("Segoe UI", 48),
             bg=COLOR_FONDO,
             fg=COLOR_ACENTO,
-        ).pack(pady=(35, 5))
+        ).pack(pady=(28, 6))
 
         # Nombre de la aplicación
         tk.Label(
@@ -197,7 +200,7 @@ class VentanaLogin:
             font=("Segoe UI", 9),
             bg=COLOR_FONDO,
             fg=COLOR_TEXTO_GRIS,
-        ).pack(pady=(0, 4))
+        ).pack(pady=(0, 3))
 
         # Nombre de la empresa para la que se desarrolla el sistema
         tk.Label(
@@ -206,10 +209,10 @@ class VentanaLogin:
             font=("Segoe UI", 9, "italic"),
             bg=COLOR_FONDO,
             fg=COLOR_TEXTO_GRIS,
-        ).pack(pady=(0, 30))
+        ).pack(pady=(0, 22))
 
         # ── Separador ────────────────────────────────────────────────────────
-        tk.Frame(contenedor, bg=COLOR_BORDE, height=1).pack(fill="x", pady=(0, 20))
+        tk.Frame(contenedor, bg=COLOR_BORDE, height=1).pack(fill="x", pady=(0, 14))
 
         # ── Label contraseña ─────────────────────────────────────────────────
         tk.Label(
@@ -232,7 +235,7 @@ class VentanaLogin:
             relief="flat",
             bd=0,
         )
-        self.entrada_password.pack(fill="x", ipady=8, pady=(4, 4))
+        self.entrada_password.pack(fill="x", ipady=8, pady=(6, 4))
 
         # Línea decorativa debajo del entry
         tk.Frame(contenedor, bg=COLOR_ACENTO, height=2).pack(fill="x")
@@ -253,7 +256,7 @@ class VentanaLogin:
             cursor="hand2",
             command=self._verificar_password,
         )
-        btn.pack(fill="x", ipady=10, pady=(22, 0))
+        btn.pack(fill="x", ipady=10, pady=(16, 0))
 
         # ── Poner foco en el campo de contraseña ─────────────────────────────
         self.entrada_password.focus_set()
@@ -295,7 +298,7 @@ class VentanaRegistro:
         # Alto aumentado de 670 a 760: con 670px el botón
         # "Calcular Nómina / Mostrar Reporte" y "Salir" quedaban
         # parcialmente cortados en la parte inferior de la ventana.
-        self.root.geometry("560x760")
+        self.root.geometry("480x620")
         self.root.resizable(False, False)
         self.root.configure(bg=COLOR_FONDO)
 
@@ -320,7 +323,7 @@ class VentanaRegistro:
         self._validador_numerico = self.root.register(self._validar_solo_numeros)
         self._validador_nombre   = self.root.register(self._validar_solo_letras)
 
-        VentanaLogin._centrar_ventana(self.root, 560, 760)
+        VentanaLogin._centrar_ventana(self.root, 480, 620)
         self._construir_ui()
         self.root.mainloop()
 
@@ -382,7 +385,7 @@ class VentanaRegistro:
 
         # ── Área de formulario con scroll ─────────────────────────────────────
         # Usamos un Frame con padding para agrupar los campos
-        form = tk.Frame(self.root, bg=COLOR_FONDO, padx=30, pady=15)
+        form = tk.Frame(self.root, bg=COLOR_FONDO, padx=24, pady=6)
         form.pack(fill="both", expand=True)
 
         # ── Campo: Identificación ────────────────────────────────────────────
@@ -407,7 +410,7 @@ class VentanaRegistro:
         self.var_genero = tk.StringVar(value="Masculino")
 
         frame_radio = tk.Frame(form, bg=COLOR_FONDO)
-        frame_radio.grid(row=self._fila_actual, column=0, columnspan=2, sticky="w", pady=(0, 10))
+        frame_radio.grid(row=self._fila_actual, column=0, columnspan=2, sticky="w", pady=(0, 5))
         self._fila_actual += 1
 
         for opcion in ("Masculino", "Femenino"):
@@ -453,7 +456,7 @@ class VentanaRegistro:
             font=FUENTE_ENTRADA,
             style="Custom.TCombobox",
         )
-        self.combo_cargo.grid(row=self._fila_actual, column=0, columnspan=2, sticky="ew", pady=(0, 10), ipady=5)
+        self.combo_cargo.grid(row=self._fila_actual, column=0, columnspan=2, sticky="ew", pady=(0, 5), ipady=4)
         self._fila_actual += 1
         # Cuando cambia el cargo, actualiza automáticamente el salario
         self.combo_cargo.bind("<<ComboboxSelected>>", self._actualizar_salario)
@@ -473,10 +476,10 @@ class VentanaRegistro:
             relief="flat",
             state="disabled",        # ← completamente deshabilitado
         )
-        self.entrada_salario.grid(row=self._fila_actual, column=0, columnspan=2, sticky="ew", ipady=7, pady=(0, 10))
+        self.entrada_salario.grid(row=self._fila_actual, column=0, columnspan=2, sticky="ew", ipady=5, pady=(0, 5))
         self._fila_actual += 1
         tk.Frame(form, bg=COLOR_BORDE, height=1).grid(
-            row=self._fila_actual, column=0, columnspan=2, sticky="ew", pady=(0, 10)
+            row=self._fila_actual, column=0, columnspan=2, sticky="ew", pady=(0, 5)
         )
         self._fila_actual += 1
 
@@ -492,7 +495,7 @@ class VentanaRegistro:
         form.columnconfigure(1, weight=1)
 
         # ── Barra de botones ──────────────────────────────────────────────────
-        barra = tk.Frame(self.root, bg=COLOR_PANEL, pady=14, padx=30)
+        barra = tk.Frame(self.root, bg=COLOR_PANEL, pady=6, padx=24)
         barra.pack(fill="x", side="bottom")
 
         # Botón Guardar Registro
@@ -502,7 +505,7 @@ class VentanaRegistro:
             comando=self._guardar_registro,
             color=COLOR_BTN_PPAL,
             fg_color="#0D1F2D",
-        ).pack(fill="x", ipady=8, pady=(0, 6))
+        ).pack(fill="x", ipady=6, pady=(0, 4))
 
         # Botón Calcular Nómina / Mostrar Reporte
         self._btn(
@@ -511,7 +514,7 @@ class VentanaRegistro:
             comando=self._mostrar_reporte,
             color=COLOR_ACENTO2,
             fg_color=COLOR_TEXTO,
-        ).pack(fill="x", ipady=8, pady=(0, 6))
+        ).pack(fill="x", ipady=6, pady=(0, 4))
 
         # Botón Salir
         self._btn(
@@ -520,7 +523,7 @@ class VentanaRegistro:
             comando=self._confirmar_salida,
             color=COLOR_BTN_SALIR,
             fg_color=COLOR_TEXTO,
-        ).pack(fill="x", ipady=8)
+        ).pack(fill="x", ipady=6)
 
     # ── Métodos de ayuda para construir widgets ────────────────────────────────
     def _label_campo(self, parent, texto):
@@ -535,7 +538,7 @@ class VentanaRegistro:
             bg=COLOR_FONDO,
             fg=COLOR_TEXTO_GRIS,
             anchor="w",
-        ).grid(row=self._fila_actual, column=0, columnspan=2, sticky="w", pady=(6, 0))
+        ).grid(row=self._fila_actual, column=0, columnspan=2, sticky="w", pady=(3, 0))
         self._fila_actual += 1
 
     def _crear_campo(self, parent, etiqueta, validador=None):
@@ -573,12 +576,12 @@ class VentanaRegistro:
         if validador is not None:
             entry.config(validate="key", validatecommand=(validador, "%P"))
 
-        entry.grid(row=self._fila_actual, column=0, columnspan=2, sticky="ew", ipady=7, pady=(2, 0))
+        entry.grid(row=self._fila_actual, column=0, columnspan=2, sticky="ew", ipady=5, pady=(1, 0))
         self._fila_actual += 1
 
         # Línea decorativa
         tk.Frame(parent, bg=COLOR_BORDE, height=1).grid(
-            row=self._fila_actual, column=0, columnspan=2, sticky="ew", pady=(0, 6)
+            row=self._fila_actual, column=0, columnspan=2, sticky="ew", pady=(0, 3)
         )
         self._fila_actual += 1
 
@@ -706,7 +709,7 @@ class VentanaRegistro:
             return
 
         # Abrir el reporte como ventana hija (Toplevel)
-        VentanaReporte(parent=self.root, empleado=self.empleado)
+        VentanaReporte(parent=self, empleado=self.empleado)
 
     def _confirmar_salida(self):
         """Muestra un cuadro de diálogo de confirmación antes de cerrar."""
@@ -718,6 +721,26 @@ class VentanaRegistro:
         if respuesta:
             self.root.destroy()
 
+    def limpiar_formulario(self):
+        """
+        Limpia todos los campos del formulario de Registro y reinicia
+        self.empleado a None. Se invoca desde VentanaReporte al presionar
+        "Regresar", para dejar la interfaz lista para un nuevo registro.
+        """
+        self.entrada_id.delete(0, tk.END)
+        self.entrada_nombre.delete(0, tk.END)
+        self.entrada_dias.delete(0, tk.END)
+
+        self.var_genero.set("Masculino")
+        self.var_cargo.set("")
+
+        self.entrada_salario.config(state="normal")
+        self.var_salario.set("Seleccione un cargo primero")
+        self.entrada_salario.config(state="disabled")
+
+        self.empleado = None
+        self.entrada_id.focus_set()
+
 
 # =============================================================================
 # VENTANA 3 – REPORTE / NÓMINA
@@ -728,14 +751,17 @@ class VentanaReporte:
     y calcula el total a pagar usando el método de la clase GestionEmpleados.
     """
 
-    def __init__(self, parent: tk.Tk, empleado: GestionEmpleados):
+    def __init__(self, parent, empleado: GestionEmpleados):
         self.empleado = empleado
-        self.parent = parent
+        # 'parent' es la instancia de VentanaRegistro (no solo su root),
+        # lo que permite invocar limpiar_formulario() al regresar.
+        self.ventana_registro = parent
+        self.parent = parent.root
 
         # ── Crear ventana hija ─────────────────────────────────────────────────
-        self.ventana = tk.Toplevel(parent)
+        self.ventana = tk.Toplevel(self.parent)
         self.ventana.title("Reporte de Nómina")
-        self.ventana.geometry("500x600")
+        self.ventana.geometry("500x660")
         self.ventana.resizable(False, False)
         self.ventana.configure(bg=COLOR_FONDO)
         self.ventana.grab_set()   # Bloquea interacción con la ventana padre mientras está abierta
@@ -746,17 +772,19 @@ class VentanaReporte:
         # de Nombre/Género/Días podrían quedar bloqueados.
         self.ventana.protocol("WM_DELETE_WINDOW", self._cerrar)
 
-        VentanaLogin._centrar_ventana(self.ventana, 500, 600)
+        VentanaLogin._centrar_ventana(self.ventana, 500, 660)
         self._construir_ui()
 
     def _cerrar(self):
         """
-        Libera el grab_set, destruye la ventana de reporte y devuelve
-        el foco a la ventana de Registro (padre), evitando que sus
-        campos queden bloqueados o sin respuesta.
+        Libera el grab_set, destruye la ventana de reporte, limpia el
+        formulario de Registro (identificación, nombre, días laborados,
+        salario, género y cargo restablecidos a sus valores por defecto)
+        y devuelve el foco a la ventana de Registro.
         """
         self.ventana.grab_release()
         self.ventana.destroy()
+        self.ventana_registro.limpiar_formulario()
         self.parent.focus_force()
 
     def _construir_ui(self):
@@ -784,6 +812,30 @@ class VentanaReporte:
             bg=COLOR_PANEL,
             fg=COLOR_TEXTO_GRIS,
         ).pack()
+
+        # ── Botón Regresar ─────────────────────────────────────────────────────
+        # IMPORTANTE: este botón se empaqueta con side="bottom" ANTES de
+        # crear el panel de datos (que usa expand=True). En Tkinter, el
+        # gestor pack() reserva primero el espacio de los widgets ya
+        # empaquetados; al colocar el botón antes y anclado al fondo, se
+        # le garantiza su espacio fijo en la ventana sin que el contenido
+        # variable del panel lo empuje fuera del área visible o lo deje
+        # viéndose delgado/cortado. Altura interna aumentada (ipady=16) y
+        # mayor margen respecto al borde inferior (pady=28), para que el
+        # botón tenga una presencia visual robusta y uniforme con los
+        # botones de la ventana de Registro (Guardar Registro, Calcular
+        # Nómina, Salir), sin modificar su color, texto ni funcionalidad.
+        tk.Button(
+            self.ventana,
+            text="← Regresar",
+            font=FUENTE_BTN,
+            bg=COLOR_ACENTO2,
+            fg=COLOR_TEXTO,
+            activebackground="#0062AD",
+            relief="flat",
+            cursor="hand2",
+            command=self._cerrar,
+        ).pack(side="bottom", fill="x", padx=20, pady=(10, 28), ipady=16)
 
         # ── Panel de datos ─────────────────────────────────────────────────────
         panel = tk.Frame(self.ventana, bg=COLOR_PANEL, padx=28, pady=20)
@@ -865,19 +917,6 @@ class VentanaReporte:
             fg=COLOR_TEXTO_GRIS,
         ).pack(pady=(4, 0))
 
-        # ── Botón Regresar ─────────────────────────────────────────────────────
-        tk.Button(
-            self.ventana,
-            text="← Regresar",
-            font=FUENTE_BTN,
-            bg=COLOR_ACENTO2,
-            fg=COLOR_TEXTO,
-            activebackground="#0062AD",
-            relief="flat",
-            cursor="hand2",
-            command=self._cerrar,
-        ).pack(fill="x", padx=20, pady=(0, 20), ipady=9)
-
 
 # =============================================================================
 # PUNTO DE ENTRADA
@@ -887,3 +926,4 @@ if __name__ == "__main__":
     # VentanaLogin gestiona el flujo: al autenticarse correctamente
     # destruye su propia ventana y crea VentanaRegistro.
     VentanaLogin()
+ 
